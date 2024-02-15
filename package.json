@@ -36,6 +36,7 @@
     "html-docx-js-typescript": "^0.1.5",
     "html-react-parser": "^3.0.1",
     "html-to-docx": "^1.8.0",
+    "html2pdf.js": "^0.9.0",
     "immer": "^9.0.12",
     "jodit": "^3.18.6",
     "juice": "^10.0.0",

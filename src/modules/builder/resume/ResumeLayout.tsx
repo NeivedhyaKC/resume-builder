@@ -40,9 +40,9 @@ export const ResumeLayout = () => {
   const convertToBlob = () => {
     if (resumeDiv.current) {
       const divContentString =
-        "<body> <p className='bg-blue-400'>blue</p> <p style='color:red'>adawd</p>" +
+        "<!DOCTYPE html><html><body> <p className='bg-red-400'>blue</p> <p style='color:red'>adawd</p>" +
         resumeDiv.current.outerHTML +
-        '</body>';
+        '</body></html>';
       const styles = document.querySelectorAll('style');
       for (let style of styles) {
         if (
@@ -50,19 +50,14 @@ export const ResumeLayout = () => {
             '/*\n! tailwindcss v3.0.23 | MIT License | https://tailwindcss.com\n*//*\n1.'
           )
         ) {
-          let finalString = juice.inlineContent(divContentString, style.innerHTML, {
-            applyStyleTags: false,
+          let finalString = juice.inlineContent(divContentString, style.innerHTML);
+          const docx = htmlDocx.asBlob(finalString, {
+            orientation: 'landscape',
+            margins: { top: 720 },
           });
-          console.log('s');
-          console.log(finalString);
+          saveAs(docx, 'Document.docx');
         }
       }
-
-      const docx = htmlDocx.asBlob(divContentString, {
-        orientation: 'landscape',
-        margins: { top: 720 },
-      });
-      saveAs(docx, 'b.docx');
     }
   };
 
@@ -72,6 +67,7 @@ export const ResumeLayout = () => {
         style={{ transform: `scale(${zoom})` }}
         className="origin-top transition-all duration-300 ease-linear	print:!scale-100"
       >
+        <script src="https://rawgit.com/eKoopmans/html2pdf/master/dist/html2pdf.bundle.js"></script>
         {/* this is the div to ref */}
         <div className="w-[210mm] h-[296mm] bg-white my-0 mx-auto" ref={resumeDiv}>
           <StateContext.Provider value={resumeData}>
