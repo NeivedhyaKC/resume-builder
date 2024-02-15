@@ -26,12 +26,18 @@ import { useBasicDetails } from 'src/stores/basic';
 import { useEducations } from 'src/stores/education';
 import { useExperiences } from 'src/stores/experience';
 import { useVoluteeringStore } from 'src/stores/volunteering';
+import { useEvent } from 'src/helpers/utils/eventProvider';
 
 const TOTAL_TEMPLATES_AVAILABLE = Object.keys(AVAILABLE_TEMPLATES).length;
 
 const NavBarLayout = () => {
+  const { emitEvent, onEvent } = useEvent();
   const [openToast, setOpenToast] = useState(false);
   const fileInputRef = useRef(null);
+
+  const onDownloadDocxClicked = useCallback(() => {
+    emitEvent('onDownloadDocxClicked');
+  }, []);
 
   const exportResumeData = useCallback(() => {
     const updatedResumeJson = {
@@ -154,6 +160,9 @@ const NavBarLayout = () => {
             />
           </StyledButton>
           <PrintResume />
+          <StyledButton variant="outlined" onClick={() => onDownloadDocxClicked()}>
+            Download as Docx
+          </StyledButton>
         </NavBarActions>
       </div>
       <Toast
