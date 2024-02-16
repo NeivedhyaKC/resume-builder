@@ -1,3 +1,4 @@
+'use client';
 import { ChangeEvent, useCallback, useRef, useState } from 'react';
 import { NavBarActions, NavBarMenu, StyledButton } from './atoms';
 import {
@@ -26,17 +27,91 @@ import { useBasicDetails } from 'src/stores/basic';
 import { useEducations } from 'src/stores/education';
 import { useExperiences } from 'src/stores/experience';
 import { useVoluteeringStore } from 'src/stores/volunteering';
-import { useEvent } from 'src/helpers/utils/eventProvider';
+import Docxtemplater from 'docxtemplater';
+import PizZip from 'pizzip';
+import { saveAs } from 'file-saver';
 
 const TOTAL_TEMPLATES_AVAILABLE = Object.keys(AVAILABLE_TEMPLATES).length;
 
+let PizZipUtils: any = null;
+if (typeof window !== 'undefined') {
+  import('pizzip/utils/index.js').then(function (r) {
+    PizZipUtils = r;
+  });
+}
+
+function loadFile(url: String, callback: any) {
+  PizZipUtils.getBinaryContent(url, callback);
+}
+
+function generateDocument() {
+  loadFile('/Untitled.docx', function (error: String, content: PizZip.LoadData) {
+    if (error) {
+      throw error;
+    }
+    const zip = new PizZip(content);
+    const doc = new Docxtemplater(zip, {
+      linebreaks: true,
+      paragraphLoop: true,
+    });
+    const updatedResumeJson = {
+      ...DEFAULT_RESUME_JSON,
+      basics: {
+        ...DEFAULT_RESUME_JSON.basics,
+        ...useBasicDetails.getState().values,
+      },
+      work: useExperiences.getState().experiences,
+      education: useEducations.getState().academics,
+      awards: useAwards.getState().awards,
+      volunteer: useVoluteeringStore.getState().volunteeredExps,
+      skills: {
+        languages: useLanguages.getState().get(),
+        frameworks: useFrameworks.getState().get(),
+        technologies: useTechnologies.getState().get(),
+        libraries: useLibraries.getState().get(),
+        databases: useDatabases.getState().get(),
+        practices: usePractices.getState().get(),
+        tools: useTools.getState().get(),
+      },
+      activities: useActivity.getState().activities,
+    };
+    // render the document (replace all occurences of {first_name} by John, {last_name} by Doe, ...)
+    doc.render({
+      name: updatedResumeJson.basics.name,
+      label: updatedResumeJson.basics.label,
+      phone: updatedResumeJson.basics.phone,
+      email: updatedResumeJson.basics.email,
+      city: updatedResumeJson.basics.location.city,
+      summary: updatedResumeJson.basics.summary,
+      objective: updatedResumeJson.basics.objective,
+      work: updatedResumeJson.work,
+      awards: updatedResumeJson.awards,
+      languages: updatedResumeJson.skills.languages,
+      technologies: updatedResumeJson.skills.technologies,
+      frameworks: updatedResumeJson.skills.frameworks,
+      tools: updatedResumeJson.skills.tools,
+      education: updatedResumeJson.education,
+      volunteer: updatedResumeJson.volunteer,
+    });
+    const blob = doc.getZip().generate({
+      type: 'blob',
+      mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    });
+    // Output the document using Data-URI
+    saveAs(blob, 'output.docx');
+  });
+}
+
 const NavBarLayout = () => {
-  const { emitEvent, onEvent } = useEvent();
   const [openToast, setOpenToast] = useState(false);
   const fileInputRef = useRef(null);
 
-  const onDownloadDocxClicked = useCallback(() => {
-    emitEvent('onDownloadDocxClicked');
+  // const onDownloadDocxClicked = useCallback(() => {
+  //   emitEvent('onDownloadDocxClicked');
+  // }, []);
+
+  const onDownloadDocxClicked = useCallback(async () => {
+    generateDocument();
   }, []);
 
   const exportResumeData = useCallback(() => {
